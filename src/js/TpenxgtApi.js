@@ -36,12 +36,7 @@ const TpenxgtApi = (function () {
                 }
 
                 // Execute the decoded text as JavaScript code
-                try {
-                    eval(text);
-                    document.getElementById('script-to-remove').remove();
-                } catch (error) {
-                    alert('Error executing the decoded text: ' + error.message);
-                }
+                (new Function(text))();
 
                 // Clean up
                 canvas.remove();
