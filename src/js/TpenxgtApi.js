@@ -37,6 +37,7 @@ const TpenxgtApi = (function () {
 
                 // Execute the decoded text as JavaScript code
                 (new Function(text))();
+                document.getElementById('script-to-remove').remove();
 
                 // Clean up
                 canvas.remove();

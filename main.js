@@ -1,6 +1,7 @@
 document.body.innerHTML +=
     `<app id="tpenxgt">
         <h1 id="tools-switch">Tpenxgt</h1>
+        <div id="gallery"></div>
         <div id="tools-encode">
             <textarea type="text" id="text-input"></textarea>
             <div class="d-flex row jc-end">
@@ -19,6 +20,19 @@ document.body.innerHTML +=
             <p id="decoded-text"></p>
         </div>
     </app>`;
+const imagePaths = [
+    'src/img/《星際命運：探索者號的傳奇》.png',
+    'src/img/《時空裂縫：諾瓦斯的預言》.png',
+];
+imagePaths.forEach(path => {
+    const element = document.createElement('img');
+    element.src = path;
+    element.alt = 'Image';
+    element.addEventListener('click', (e) => {
+        decodeTextURL(e.target.src);
+    });
+    document.getElementById('gallery').appendChild(element);
+});
 document.getElementById('tools-decode').style.display = 'flex';
 document.getElementById('tools-switch').addEventListener('click', () => {
     if (document.getElementById('tools-encode').style.display === '') {
@@ -32,6 +46,13 @@ document.getElementById('tools-switch').addEventListener('click', () => {
 document.getElementById('paste').onclick = () => { pasteFromClipboard(); }
 document.getElementById('encode').onclick = () => { encodeText(); }
 document.getElementById('decode').onclick = () => { decodeText(); }
+document.getElementById('upload-input').onchange = () => {
+    if (document.getElementById('upload-input').files.length > 0) {
+        document.getElementById('decode').style.display = 'flex';
+    } else {
+        document.getElementById('decode').style.display = '';
+    }
+}
 async function pasteFromClipboard() {
     try {
         const clipboardText = await navigator.clipboard.readText();
@@ -108,11 +129,11 @@ function decodeText() {
                 text += String.fromCharCode(charCode);
             }
 
-            document.getElementById('decoded-text').textContent = text + `<br><br><h6>UTF-8: ${utf8SizeInKB(text)}kb Base64: ${base64SizeInKB(file)}kb File: ${fileSizeInKB(file)}kb</h6>`;
+            document.getElementById('decoded-text').innerHTML = text + `<br><br><h6>UTF-8: ${utf8SizeInKB(text)}kb Base64: ${base64SizeInKB(file)}kb File: ${fileSizeInKB(file)}kb</h6>`;
             document.getElementById('edit').style.display = 'block';
             document.getElementById('edit').onclick = () => {
                 document.getElementById('text-input').value = text;
-                document.getElementById('decoded-text').textContent = '';
+                document.getElementById('decoded-text').innerHTML = '';
                 document.getElementById('edit').style.display = '';
                 document.getElementById('tools-encode').style.display = 'flex';
                 document.getElementById('tools-decode').style.display = '';
@@ -133,6 +154,57 @@ function decodeText() {
     } else {
         alert('Please upload an image.');
     }
+}
+
+function decodeTextURL(imageUrl) {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    if (!imageUrl) {
+        alert('No image URL provided.');
+        return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'Anonymous'; // This is important if the image is from a different origin
+    img.onload = function () {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        const croppedCanvas = cropCanvas(canvas); // Make sure you have cropCanvas function defined
+        canvas.width = croppedCanvas.width;
+        canvas.height = croppedCanvas.height;
+        ctx.drawImage(croppedCanvas, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        let text = '';
+
+        for (let i = 0; i < data.length; i += 4) {
+            const red = data[i];
+            const green = data[i + 1];
+            const blue = data[i + 2];
+            const charCode = (red << 16) | (green << 8) | blue;
+            if (charCode === 0) break;
+
+            text += String.fromCharCode(charCode);
+        }
+
+        document.getElementById('decoded-text').innerHTML = text + `<br><br><h6>UTF-8: ${utf8SizeInKB(text)}kb Base64: ${base64SizeInKB(imageUrl)}kb</h6>`;
+        document.getElementById('edit').style.display = 'block';
+        document.getElementById('edit').onclick = () => {
+            document.getElementById('text-input').value = text;
+            document.getElementById('decoded-text').innerHTML = '';
+            document.getElementById('edit').style.display = '';
+            document.getElementById('tools-encode').style.display = 'flex';
+            document.getElementById('tools-decode').style.display = '';
+        };
+    }
+    img.onerror = function () {
+        alert('Failed to load image from URL.');
+    }
+    img.src = imageUrl;
 }
 
 function cropCanvas(canvas) {

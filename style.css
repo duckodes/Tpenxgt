@@ -52,6 +52,11 @@ body {
     background-color: #303030;
 }
 
+img {
+    border: 1px dashed #ffffff;
+    cursor: pointer;
+}
+
 #tpenxgt {
     display: flex;
     flex-direction: column;
@@ -117,6 +122,10 @@ button {
 #upload-input {
     width: 90dvw;
     max-width: 500px;
+}
+
+#decode {
+    display: none;
 }
 
 #edit {
